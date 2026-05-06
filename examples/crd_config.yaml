@@ -1,0 +1,8 @@
+# Used only as fallback when annotations are absent and no explicit CLI override is given.
+group: foo.bar.io
+version: v1alpha1
+scope: Namespaced
+names:
+  singular: widget
+  plural: widgets
+  shortNames: [wdg]

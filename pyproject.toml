@@ -1,0 +1,79 @@
+[project]
+name = "kdantic"
+description = "KDantic - Create Kubernetes CRD manifests using Pydantic models"
+requires-python = ">=3.12"
+dependencies = [
+    "pyyaml>=6.0.2",
+    "pydantic",
+    "pydantic-settings",
+    "rich"
+]
+
+dynamic = ["version"]
+license = { text = "Other/Proprietary License" }
+readme = { file = "README.md", content-type = "text/x-markdown" }
+maintainers = [
+    { name = "Nikolaos Deligeorgis", email = "Nikolaos.Deligeorgis@sony.com" },
+]
+authors = [
+    { name = "Nikolaos Deligeorgis", email = "Nikolaos.Deligeorgis@sony.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Typing :: Typed",
+    "Natural Language :: English",
+    "License :: Other/Proprietary License",
+]
+
+
+[project.scripts]
+kdantic = "kdantic.cli:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+
+[tool.pdm.resolution]
+allow-prereleases = false
+
+[tool.pdm.version]
+source = "scm"
+write_to = "kdantic/__version__.py"
+write_template = "__version__ = '{}'"
+tag_regex = "^(.+)$"
+
+[dependency-groups]
+build = [
+    "toml",
+    "pdm-backend",
+    "packaging",
+]
+
+dev = [
+    "ipython",
+    "ruff",
+]
+
+test = [
+    "coverage",
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.uv]
+cache-keys = [{ file = "**/*.toml" }]
+
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

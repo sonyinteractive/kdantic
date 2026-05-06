@@ -1,0 +1,15 @@
+src/kdantic/__version__.py
+.idea
+.venv
+.DS_Store
+libprovinfo/
+nacl/
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+.env
+dist/
+build/
