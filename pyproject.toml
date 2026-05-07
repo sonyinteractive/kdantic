@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 dynamic = ["version"]
-license = { text = "Other/Proprietary License" }
+license = { text = "Apache-2.0" }
 readme = { file = "README.md", content-type = "text/x-markdown" }
 maintainers = [
     { name = "Nikolaos Deligeorgis", email = "Nikolaos.Deligeorgis@sony.com" },
@@ -29,7 +29,7 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Typing :: Typed",
     "Natural Language :: English",
-    "License :: Other/Proprietary License",
+    "License :: OSI Approved :: Apache Software License",
 ]
 
 
