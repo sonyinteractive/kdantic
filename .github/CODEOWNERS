@@ -4,25 +4,4 @@
 # ------------------------------------------------------------
 
 # Global fallback — catches everything not matched below
-*                                   @nikdeligeorgis
-
-# Core logic
-src/kdantic/cli.py                  @nikdeligeorgis
-src/kdantic/helpers/annotations.py  @nikdeligeorgis
-src/kdantic/helpers/schema.py       @nikdeligeorgis
-src/kdantic/helpers/settings.py     @nikdeligeorgis
-src/kdantic/helpers/shared.py       @nikdeligeorgis
-src/kdantic/helpers/dotted_file.py  @nikdeligeorgis
-
-# Tests
-tests/                              @nikdeligeorgis
-
-# Project metadata & config
-pyproject.toml                      @nikdeligeorgis
-CONTRIBUTING.md                     @nikdeligeorgis
-LICENSE                             @nikdeligeorgis
-README.md                           @nikdeligeorgis
-.gitignore                          @nikdeligeorgis
-
-# GitHub config
-.github/                            @nikdeligeorgis
+*  @sonyinteractive/sie-gdft-kdantic
