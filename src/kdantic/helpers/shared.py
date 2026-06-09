@@ -36,7 +36,7 @@ def get_default(model_field: FieldInfo) -> object:
 
 
 def get_default_factory(model_field: FieldInfo) -> object:
-    """Return the field's default_factory if set, otherwise None."""
+    """Return the field's default_factory callable if set, otherwise None."""
     return model_field.default_factory
 
 
@@ -94,11 +94,17 @@ def _normalize_scope(scope: str | None) -> str | None:
 def _literal_str_from_annotations(
     model: type[BaseModel], field_name: str
 ) -> str | None:
-    """Return the first string value of a Literal annotation on a field, or None."""
+    """Return the first string value of a Literal annotation on a field, or None.
+
+    Uses get_type_hints() to ensure annotations are fully evaluated.
+    Falls back to an empty dict on failure — raw __annotations__ is intentionally
+    avoided here because Python 3.14 makes annotations lazy by default (PEP 649),
+    meaning __annotations__ values may be unevaluated proxies rather than real types.
+    """
     try:
         hints = get_type_hints(model)
     except Exception:
-        hints = getattr(model, "__annotations__", {})
+        hints = {}
     ann = hints.get(field_name)
     if get_origin(ann) is Literal:
         vals = [a for a in get_args(ann) if isinstance(a, str)]
