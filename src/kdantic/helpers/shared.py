@@ -2,10 +2,7 @@ import types
 from typing import Union, get_args, get_origin, Literal, get_type_hints
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
-
-# re-export so callers only need one import
-__all__ = ["PydanticUndefined"]
+from pydantic_core import PydanticUndefined as PydanticUndefined
 
 
 # ------------------------------------------------------------------------------
@@ -38,7 +35,7 @@ def get_default(model_field: FieldInfo) -> object:
     return model_field.get_default()
 
 
-def get_default_factory(model_field: FieldInfo):
+def get_default_factory(model_field: FieldInfo) -> object:
     """Return the field's default_factory if set, otherwise None."""
     return model_field.default_factory
 
