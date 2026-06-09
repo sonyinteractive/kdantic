@@ -7,7 +7,7 @@ producing consistent, validated CRD metadata structures.
 
 import logging
 from collections.abc import Iterable, Mapping
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, get_type_hints, runtime_checkable
 
 from kdantic.helpers.settings import kdantic_settings
 from kdantic.helpers.shared import (
@@ -95,7 +95,6 @@ def _validate_dunder_crd_metadata(meta: Any) -> None:
             continue
 
         if name == "short_names":
-            # Must be an Iterable (protocol), but not a string-like scalar itself
             if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Iterable):
                 raise TypeError("Attribute 'short_names' must be an iterable of string-like objects or None")
 
@@ -106,13 +105,11 @@ def _validate_dunder_crd_metadata(meta: Any) -> None:
             if bad_elems:
                 raise TypeError(f"All elements of 'short_names' must be string-like; bad elements at {bad_elems}")
         elif name == "cel_rules":
-            # Expect an iterable of mappings or BaseModels; each has string 'rule' and optional string 'message'.
             if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Iterable):
                 raise TypeError(
                     "Attribute 'cel_rules' must be an iterable of mappings/BaseModels (each with 'rule' and optional 'message') or None"
                 )
             for idx, elem in enumerate(value):
-                # 1) Mapping case
                 if isinstance(elem, Mapping):
                     rule = elem.get("rule")
                     if not isinstance(rule, (str, bytes, bytearray)):
@@ -125,7 +122,6 @@ def _validate_dunder_crd_metadata(meta: Any) -> None:
                         raise TypeError(f"cel_rules[{idx}].message must be a string if provided")
                     continue
 
-                # 2) Pydantic BaseModel case
                 if isinstance(elem, BaseModel):
                     rule = getattr(elem, "rule", None)
                     if not isinstance(rule, (str, bytes, bytearray)):
@@ -135,9 +131,7 @@ def _validate_dunder_crd_metadata(meta: Any) -> None:
                         raise TypeError(f"cel_rules[{idx}].message must be a string if provided")
                     continue
 
-                # 3) Anything else → reject
                 raise TypeError(f"cel_rules[{idx}] must be a mapping or BaseModel, got {type(elem).__name__}")
-        # Scalar string-like requirement
         elif not _is_string_like(value):
             raise TypeError(
                 f"Attribute '{name}' on __crd_meta__ must be string-like | None, got {type(value).__name__}"
@@ -182,7 +176,6 @@ class CRDMetaData(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _coerce_cel_rules(cls, data: Any):
-        # Normalize cel_rules to list[dict[str, Any]] if present
         if not isinstance(data, dict):
             return data
         rules = data.get("cel_rules")
@@ -190,13 +183,12 @@ class CRDMetaData(BaseModel):
             return data
         if isinstance(rules, (str, bytes, bytearray)) or not isinstance(rules, Iterable):
             return data
-        from collections.abc import Mapping as _Mapping
 
         normalized: list[dict[str, Any]] = []
         for r in rules:
             if isinstance(r, BaseModel):
                 normalized.append(r.model_dump(by_alias=True, exclude_none=True))
-            elif isinstance(r, _Mapping):
+            elif isinstance(r, Mapping):
                 normalized.append(dict(r))
             else:
                 raise TypeError(f"Invalid cel_rules item type: {type(r).__name__}; expected Mapping or BaseModel")
@@ -297,17 +289,23 @@ def _derive_scope_from_annotations(model: type[BaseModel]) -> str | None:
 
     """
     fields = get_model_fields_map(model)
-    # Namespaced if root has a 'namespace' field
     if "namespace" in fields:
         return "Namespaced"
-    # Or if metadata model has 'namespace'
+
     meta_field = fields.get("metadata")
-    meta_ann = getattr(model, "__annotations__", {}).get("metadata")
     meta_type: type[BaseModel] | None = None
+
+    try:
+        hints = get_type_hints(model)
+    except Exception:
+        hints = {}
+
+    meta_ann = hints.get("metadata")
     if isinstance(meta_ann, type) and issubclass(meta_ann, BaseModel):
         meta_type = meta_ann
     elif meta_field is not None:
         meta_type = meta_field.annotation
+
     if isinstance(meta_type, type) and issubclass(meta_type, BaseModel):
         if "namespace" in get_model_fields_map(meta_type):
             return "Namespaced"
@@ -450,7 +448,7 @@ def build_crd_meta(
     d_kind = _get_meta_attr("kind")
     d_singular = _get_meta_attr("singular")
     d_plural = _get_meta_attr("plural")
-    d_short = list(_get_meta_attr("short_names", []) or [])
+    d_short = list(_get_meta_attr("short_names") or [])
     d_cel = _get_meta_attr("cel_rules")
 
     # 3) Choose high-level values
@@ -461,11 +459,9 @@ def build_crd_meta(
     short_names_val = d_short or kdantic_settings.default_short_names or [_short_name(kind_val)]
 
     # 4) Names resolution (singular/plural/shortNames) with the requested fallback order
-    # singular
     singular_val = d_singular or kdantic_settings.default_singular or _derive_singular_from_kind(kind_val)
-
-    # plural (only derive from singular if plural missing)
     plural_val = d_plural or kdantic_settings.default_plural or _pluralize(singular_val)
+
     metadata = CRDMetaData(
         group=group_val,
         version=version_val,
